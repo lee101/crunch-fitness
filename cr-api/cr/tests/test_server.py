@@ -22,7 +22,6 @@ class SimpleCPTest(helper.CPWebCase):
     def test_login_route(self):
         self.getPage("/login")
         self.assertStatus('200 OK')
-        self.assertHeader('Content-Type', 'text/html;charset=utf-8')
 
     def test_not_logged_in(self):
         self.getPage("/login", method="POST", body=to_http_post_body({
@@ -40,11 +39,28 @@ class SimpleCPTest(helper.CPWebCase):
             'password': '123456'
         }))
         self.assertStatus('200 OK')
-        self.assertHeader('Content-Type', 'text/html;charset=utf-8')
 
         self.getPage("/users", headers=[('Cookie', self.getReturnedCookie())])
 
 
         self.assertStatus('200 OK')
-        self.assertHeader('Content-Type', 'text/html;charset=utf-8')
+
+    def test_logging_out(self):
+        self.getPage("/login", method="POST", body=to_http_post_body({
+            'email': 'admin@crunch.io',
+            'password': '123456'
+        }))
+        self.assertStatus('200 OK')
+
+        cookie = self.getReturnedCookie()
+        self.getPage("/users", headers=[('Cookie', cookie)])
+        self.assertStatus('200 OK')
+
+        self.getPage("/logout")
+
+
+        self.assertTrue(self.status.startswith('30'))
+
+        self.getPage("/users", headers=[('Cookie', cookie)])
+        self.assertStatus('403 Forbidden')
 
