@@ -1,10 +1,13 @@
+import json
+
 import cherrypy
 from cherrypy.test import helper
 from cr.api import server
+import fake_data
+
 
 def to_http_post_body(data):
     return '&'.join(['{}={}'.format(key, value) for key, value in data.iteritems()])
-
 
 
 class SimpleCPTest(helper.CPWebCase):
@@ -45,8 +48,6 @@ class SimpleCPTest(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         self.getPage("/users", headers=[('Cookie', self.getReturnedCookie())])
-
-
         self.assertStatus('200 OK')
 
     def test_logging_out(self):
@@ -62,9 +63,35 @@ class SimpleCPTest(helper.CPWebCase):
 
         self.getPage("/logout", headers=[('Cookie', cookie)])
 
-
         self.assertTrue(self.status.startswith('30'))
 
         self.getPage("/users", headers=[('Cookie', cookie)])
         self.assertStatus('403 Forbidden')
 
+    def test_can_add_new_user(self):
+        new_user = fake_data.get_user()
+
+        self.getPage("/login", method="POST", body=to_http_post_body({
+            'email': 'admin@crunch.io',
+            'password': '123456'
+        }))
+        self.assertStatus('200 OK')
+
+        cookie = self.getReturnedCookie()
+        self.getPage("/users", headers=[('Cookie', cookie)])
+        self.assertStatus('200 OK')
+        results = json.loads(self.body)
+        users = results['users']
+        for user in users:
+            self.assertNotEqual(user['email'], new_user['email'])
+
+        self.getPage("/users", method="POST", headers=[('Cookie', cookie)],
+                     body=to_http_post_body(new_user))
+        self.assertStatus('200 OK')
+
+        self.getPage("/users", headers=[('Cookie', cookie)])
+        self.assertStatus('200 OK')
+        results = json.loads(self.body)
+        users = results['users']
+
+        self.assertIn(new_user['email'], map(lambda user: user['email'], users))
