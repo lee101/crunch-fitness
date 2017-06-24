@@ -14,6 +14,11 @@ class SimpleCPTest(helper.CPWebCase):
 
     setup_server = staticmethod(setup_server)
 
+    def getReturnedCookie(self):
+        for name, value in self.headers:
+            if name == 'Set-Cookie':
+                return value[:value.find(';')]
+
     def test_login_route(self):
         self.getPage("/login")
         self.assertStatus('200 OK')
@@ -26,7 +31,7 @@ class SimpleCPTest(helper.CPWebCase):
         }))
         self.assertStatus('403 Forbidden')
 
-        self.getPage("/users")
+        self.getPage("/users", headers=[('Cookie', self.getReturnedCookie())])
         self.assertStatus('403 Forbidden')
 
     def test_logging_in(self):
@@ -37,7 +42,8 @@ class SimpleCPTest(helper.CPWebCase):
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
 
-        self.getPage("/users")
+        self.getPage("/users", headers=[('Cookie', self.getReturnedCookie())])
+
 
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
