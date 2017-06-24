@@ -113,7 +113,8 @@ class Root(object):
         Should log the user out, rendering them incapable of accessing the users endpoint, and it
         should redirect the user to the login page.
         """
-        cherrypy.session.delete()
+        cherrypy.session.clear()
+        cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect("/login")
 
 

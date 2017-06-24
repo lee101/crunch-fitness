@@ -19,6 +19,10 @@ class SimpleCPTest(helper.CPWebCase):
             if name == 'Set-Cookie':
                 return value[:value.find(';')]
 
+    def test_index(self):
+        self.getPage("/")
+        self.assertStatus('200 OK')
+
     def test_login_route(self):
         self.getPage("/login")
         self.assertStatus('200 OK')
@@ -56,7 +60,7 @@ class SimpleCPTest(helper.CPWebCase):
         self.getPage("/users", headers=[('Cookie', cookie)])
         self.assertStatus('200 OK')
 
-        self.getPage("/logout")
+        self.getPage("/logout", headers=[('Cookie', cookie)])
 
 
         self.assertTrue(self.status.startswith('30'))
