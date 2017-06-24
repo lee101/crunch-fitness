@@ -9,7 +9,7 @@ users_filename = os.path.join(os.path.dirname(__file__), 'users.json')
 def load_data(settings=None, clear=None):
     if settings is None:
         settings = global_settings
-        global_settings.update(json.load(file(sys.argv[1])))
+        global_settings.update(json.load(file('settings.json')))
 
     db = connect(settings)
 

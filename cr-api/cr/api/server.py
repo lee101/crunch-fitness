@@ -5,7 +5,6 @@ import cherrypy
 import json
 import sys
 from data_accessor import DataAccessor
-import utils
 
 session_key = 'cr-api-user'
 
@@ -25,23 +24,11 @@ class Root(object):
     def authenticated(func):
         @wraps(func)
         def authenticated_func(self, *args, **kwargs):
-
-            if 'email' in cherrypy.request and 'password' in cherrypy.request:
-                email = cherrypy.request.email
-                password = cherrypy.request.password
-                self.current_user = self.data_accessor.get_user(email)
-                hash = hashlib.sha1(password).hexdigest()
-                if self.current_user and self.current_user['hash'] == hash:
-                    cherrypy.session[session_key] = self.current_user
-                    return func(*args, **kwargs)
-                else:
-                    return self.error_403()
+            self.current_user = cherrypy.session.get(session_key)
+            if self.current_user:
+                return func(self, *args, **kwargs)
             else:
-                self.current_user = cherrypy.session[session_key]
-                if self.current_user:
-                    return func(*args, **kwargs)
-                else:
-                    return self.error_403()  # redirect to login page?
+                return self.error_403()  # redirect to login page?
 
         return authenticated_func
 
@@ -50,6 +37,7 @@ class Root(object):
 
     index.exposed = True
 
+    @cherrypy.expose
     @authenticated
     def users(self):
         """
@@ -63,14 +51,12 @@ class Root(object):
         """
 
         if cherrypy.request.method == 'GET':
-            return json.dumps({'users': [u for u in self.data_accessor.get()]})
+            return json.dumps({'users': [u for u in self.data_accessor.get_all_users()]})
+        if cherrypy.request.method == 'POST':
+            cherrypy.request.args
 
-    users.exposed = True
 
-    @authenticated
-    def auth_login(self):
-        return 'success'
-
+    @cherrypy.expose
     def login(self, email=None, password=None):
         """
         a GET to this endpoint should provide the user login/logout capabilities
@@ -83,8 +69,11 @@ class Root(object):
         """
         if cherrypy.request.method == 'POST':
             self.current_user = self.data_accessor.get_user(email)
+            if not self.current_user:
+                return self.error_403()
+
             hash = hashlib.sha1(password).hexdigest()
-            if self.current_user and self.current_user['hash'] == hash:
+            if self.current_user['hash'] == hash:
                 cherrypy.session[session_key] = self.current_user
                 return 'worked'
             else:
@@ -117,14 +106,18 @@ class Root(object):
                 </form>
             """
 
-    login.exposed = True
 
+    @cherrypy.expose
     def logout(self):
         """
         Should log the user out, rendering them incapable of accessing the users endpoint, and it
         should redirect the user to the login page.
         """
+        cherrypy.session.delete()
+        raise cherrypy.HTTPRedirect("/login")
 
+
+    @cherrypy.expose
     def distances(self):
         """
         Each user has a lat/lon associated with them.  Using only numpy, determine the distance
@@ -136,12 +129,13 @@ class Root(object):
         """
 
 
+root_config = {'tools.sessions.on': True}
+cherrypy_server_config = {'/': root_config}
+
 def run():
-    settings_filename = sys.argv[1] or 'settings.json'
+    settings_filename = 'settings.json'
 
-    config = {'tools.sessions.on': True}
-    cherrypy.quickstart(Root(settings_filename), config={'/': config})
-
+    cherrypy.quickstart(Root(settings_filename), config=cherrypy_server_config)
 
 if __name__ == "__main__":
     run()
