@@ -1,8 +1,13 @@
 import hashlib
 from functools import wraps
+from itertools import combinations
 
 import cherrypy
 import json
+
+import geopy
+import numpy as np
+from geopy.distance import vincenty
 from bson import json_util
 import sys
 from data_accessor import DataAccessor
@@ -100,6 +105,7 @@ class Root(object):
                 return 'successfully added user'
             else:
                 raise cherrypy.HTTPError(500, 'couldn\'t write user to database')
+
     @cherrypy.expose
     def login(self, email=None, password=None):
         """
@@ -161,6 +167,7 @@ class Root(object):
         raise cherrypy.HTTPRedirect("/login")
 
     @cherrypy.expose
+    @cherrypy.tools.allow(methods=['GET'])
     def distances(self):
         """
         Each user has a lat/lon associated with them.  Using only numpy, determine the distance
@@ -170,6 +177,13 @@ class Root(object):
         Don't code, but explain how would you scale this to 1,000,000 users, considering users
         changing position every few minutes?
         """
+        distances_array = self.data_accessor.get_all_distances()
+        return json.dumps({
+            'std': distances_array.std(),
+            'min': distances_array.min(),
+            'max': distances_array.max(),
+            'avg': distances_array.mean(),
+        })
 
 
 root_config = {'tools.sessions.on': True}

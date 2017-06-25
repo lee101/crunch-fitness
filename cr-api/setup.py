@@ -18,6 +18,8 @@ setup(
                       'cr.db',
                       'webtest',
                       'pytest',
+                      'geopy',
+                      'numpy',
                       ],
     tests_require=[],
     packages=find_packages(exclude=['ez_setup']),

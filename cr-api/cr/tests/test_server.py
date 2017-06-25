@@ -95,3 +95,9 @@ class SimpleCPTest(helper.CPWebCase):
         users = results['users']
 
         self.assertIn(new_user['email'], map(lambda user: user['email'], users))
+
+    def test_distances(self):
+        self.getPage("/distances")
+        self.assertStatus('200 OK', msg=self.body)
+        results = json.loads(self.body)
+        self.assertTrue(results['min'] < results['avg'] < results['max'])

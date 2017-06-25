@@ -18,3 +18,11 @@ def test_add_user():
     assert new_user['email'] == expected_user['email']
 
 
+def test_get_distances():
+    users = list(accessor.get_all_users())
+    distances = list(accessor.get_all_distances())
+
+    assert len(distances) == (len(users) * (len(users) - 1)) / 2
+
+
+
