@@ -1,5 +1,7 @@
 import json
 
+from datetime import datetime
+
 from cr.db.store import global_settings as settings, connect
 
 
@@ -13,3 +15,8 @@ class DataAccessor(object):
 
     def get_user(self, email):
         return self.db.users.find_one({'email': email})
+
+    def add_user(self, user):
+        registered = datetime.now()
+        user['registered'] = registered
+        return self.db.users.insert_one(user)

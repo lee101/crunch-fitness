@@ -3,6 +3,7 @@ from functools import wraps
 
 import cherrypy
 import json
+from bson import json_util
 import sys
 from data_accessor import DataAccessor
 import validator
@@ -60,7 +61,7 @@ class Root(object):
         """
 
         if cherrypy.request.method == 'GET':
-            return json.dumps({'users': [u for u in self.data_accessor.get_all_users()]})
+            return json.dumps({'users': [u for u in self.data_accessor.get_all_users()]}, default=json_util.default)
         if cherrypy.request.method == 'POST':
             valid, error = validator.validate_latlng(latitude, longitude)
             if not valid:
@@ -84,8 +85,21 @@ class Root(object):
             if not valid:
                 raise cherrypy.HTTPError(400, error)
 
-            cherrypy.request.asdf
+            hash = hashlib.sha1(password).hexdigest()
 
+            result = self.data_accessor.add_user({
+                'hash': hash,
+                'first_name': first_name,
+                'last_name': last_name,
+                'company': company,
+                'email': email,
+                'latitude': latitude,
+                'longitude': longitude,
+            })
+            if result.acknowledged:
+                return 'successfully added user'
+            else:
+                raise cherrypy.HTTPError(500, 'couldn\'t write user to database')
     @cherrypy.expose
     def login(self, email=None, password=None):
         """
