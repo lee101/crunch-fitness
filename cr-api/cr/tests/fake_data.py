@@ -16,8 +16,10 @@ def get_user(name=None):
         "password": '12345678910'
     }
 
+
 def get_unicode_char_user():
     return get_user(u'¿unicode_person')
+
 
 def get_special_char_user():
     return get_user(u' ¿!@#$%^&*()')

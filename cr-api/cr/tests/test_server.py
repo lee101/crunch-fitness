@@ -2,8 +2,9 @@ import json
 
 import cherrypy
 from cherrypy.test import helper
-from cr.api import server
+
 import fake_data
+from cr.api import server
 
 
 def to_http_post_body(data):

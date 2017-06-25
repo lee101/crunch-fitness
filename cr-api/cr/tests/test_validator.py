@@ -45,6 +45,7 @@ def test_validate_name():
     valid, message = validator.validate_name('A\t')
     assert not valid, message
 
+
 def test_validate_company():
     valid, message = validator.validate_company(u'¿Corp')
     assert valid, message
@@ -56,6 +57,7 @@ def test_validate_company():
     assert not valid, message
     valid, message = validator.validate_name(u'\racme')
     assert not valid, message
+
 
 def test_validate_email():
     valid, message = validator.validate_email(u'leepenkman@gmail.com')
@@ -75,4 +77,3 @@ def test_validate_email():
     assert not valid, message
     valid, message = validator.validate_email(u'A@A.')
     assert not valid, message
-

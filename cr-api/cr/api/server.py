@@ -1,17 +1,12 @@
 import hashlib
+import json
 from functools import wraps
-from itertools import combinations
 
 import cherrypy
-import json
-
-import geopy
-import numpy as np
-from geopy.distance import vincenty
 from bson import json_util
-import sys
-from data_accessor import DataAccessor
+
 import validator
+from data_accessor import DataAccessor
 
 session_key = 'cr-api-user'
 
