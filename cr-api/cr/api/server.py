@@ -5,6 +5,7 @@ import cherrypy
 import json
 import sys
 from data_accessor import DataAccessor
+import validator
 
 session_key = 'cr-api-user'
 
@@ -39,7 +40,15 @@ class Root(object):
 
     @cherrypy.expose
     @authenticated
-    def users(self):
+    def users(self,
+              first_name=None,
+              last_name=None,
+              company=None,
+              email=None,
+              password=None,
+              latitude=None,
+              longitude=None,
+              ):
         """
         for GET: update this to return a json stream defining a listing of the users
         for POST: should add a new user to the users collection, with validation
@@ -53,8 +62,29 @@ class Root(object):
         if cherrypy.request.method == 'GET':
             return json.dumps({'users': [u for u in self.data_accessor.get_all_users()]})
         if cherrypy.request.method == 'POST':
-            cherrypy.request.args
+            valid, error = validator.validate_latlng(latitude, longitude)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
+            valid, error = validator.validate_password(password)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
 
+            valid, error = validator.validate_name(first_name)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
+            valid, error = validator.validate_name(last_name)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
+
+            valid, error = validator.validate_company(company)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
+
+            valid, error = validator.validate_email(email)
+            if not valid:
+                raise cherrypy.HTTPError(400, error)
+
+            cherrypy.request.asdf
 
     @cherrypy.expose
     def login(self, email=None, password=None):
@@ -106,7 +136,6 @@ class Root(object):
                 </form>
             """
 
-
     @cherrypy.expose
     def logout(self):
         """
@@ -116,7 +145,6 @@ class Root(object):
         cherrypy.session.clear()
         cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect("/login")
-
 
     @cherrypy.expose
     def distances(self):
@@ -133,10 +161,12 @@ class Root(object):
 root_config = {'tools.sessions.on': True}
 cherrypy_server_config = {'/': root_config}
 
+
 def run():
     settings_filename = 'settings.json'
 
     cherrypy.quickstart(Root(settings_filename), config=cherrypy_server_config)
+
 
 if __name__ == "__main__":
     run()
